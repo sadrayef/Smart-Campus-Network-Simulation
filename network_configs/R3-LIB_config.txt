@@ -1,0 +1,42 @@
+enable
+configure terminal
+hostname R3-LIB
+no ip domain-lookup
+enable secret cisco123
+banner motd # R3-LIB - Library Router #
+!
+interface GigabitEthernet0/0
+ description Link-to-R2-ADMIN (Ring)
+ ip address 10.10.100.6 255.255.255.252
+ no shutdown
+!
+interface GigabitEthernet0/1
+ description Link-to-R4-DC (Ring)
+ ip address 10.10.100.9 255.255.255.252
+ no shutdown
+!
+interface GigabitEthernet0/2
+ description LAN-Library
+ ip address 10.10.3.1 255.255.255.0
+ ip helper-address 10.10.4.10
+ no shutdown
+!
+router ospf 1
+ router-id 3.3.3.3
+ network 10.10.100.4 0.0.0.3 area 0
+ network 10.10.100.8 0.0.0.3 area 0
+ network 10.10.3.0 0.0.0.255 area 0
+ passive-interface GigabitEthernet0/2
+!
+line con 0
+ password cisco
+ login
+ logging synchronous
+!
+line vty 0 4
+ password cisco
+ login
+ transport input telnet ssh
+!
+end
+write memory

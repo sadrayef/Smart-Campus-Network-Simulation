@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>Diagnostic - Network Console</title>
+<style>
+  body { font-family: Tahoma, Arial, sans-serif; background:#eef2f7; padding:20px; }
+  .log { background:#111; color:#0f0; font-family: monospace; direction:ltr; text-align:left;
+         padding:15px; border-radius:6px; white-space:pre-wrap; font-size:13px; min-height:200px; }
+  button { background:#2e5c8a; color:white; border:none; padding:10px 18px; border-radius:4px;
+           font-size:14px; cursor:pointer; margin-bottom:15px; font-family: Tahoma; }
+  h2 { color:#1f3c5c; }
+</style>
+</head>
+<body>
+
+<h2>تست تشخیصی خام (Raw Diagnostic)</h2>
+<p>این صفحه دقیقاً نشان می‌دهد هر روش تست، چه نتیجه‌ای، در چه زمانی، با چه خطایی برمی‌گرداند.</p>
+
+<button id="runBtn">اجرای تست روی DNS (53), Mail (25) و FTP (21)</button>
+
+<div class="log" id="log">آماده برای اجرا...</div>
+
+<script>
+  var logEl = document.getElementById("log");
+
+  function log(msg) {
+    logEl.textContent += "\n" + msg;
+  }
+
+  function testFetch(ip, port, label) {
+    var url = "http://" + ip + ":" + port + "/__probe__?_=" + Date.now() + Math.random();
+    var start = Date.now();
+    log("[" + label + "] fetch() started -> " + url);
+
+    fetch(url, { mode: "no-cors", cache: "no-store" })
+      .then(function (resp) {
+        var elapsed = Date.now() - start;
+        log("[" + label + "] fetch() RESOLVED after " + elapsed + "ms | type=" + resp.type + " status=" + resp.status);
+      })
+      .catch(function (err) {
+        var elapsed = Date.now() - start;
+        log("[" + label + "] fetch() REJECTED after " + elapsed + "ms | error name=" + err.name + " message=" + err.message);
+      });
+  }
+
+  function testImg(ip, port, label) {
+    var url = "http://" + ip + ":" + port + "/__probe__?_=" + Date.now() + Math.random();
+    var start = Date.now();
+    var img = new Image();
+    log("[" + label + "] <img> probe started -> " + url);
+
+    img.onload = function () {
+      var elapsed = Date.now() - start;
+      log("[" + label + "] <img> ONLOAD after " + elapsed + "ms");
+    };
+    img.onerror = function () {
+      var elapsed = Date.now() - start;
+      log("[" + label + "] <img> ONERROR after " + elapsed + "ms");
+    };
+    img.src = url;
+
+    setTimeout(function () {
+      log("[" + label + "] <img> --- 8000ms mark reached, no event yet means still hanging ---");
+    }, 8000);
+  }
+
+  document.getElementById("runBtn").addEventListener("click", function () {
+    logEl.textContent = "شروع تست در " + new Date().toLocaleTimeString() + "\n";
+
+    testFetch("10.10.4.11", 53, "DNS-fetch");
+    testImg("10.10.4.11", 53, "DNS-img");
+
+    testFetch("10.10.4.12", 25, "MAIL-fetch");
+    testImg("10.10.4.12", 25, "MAIL-img");
+
+    testFetch("10.10.4.14", 21, "FTP-fetch");
+    testImg("10.10.4.14", 21, "FTP-img");
+
+    // برای مقایسه، یک سرویس شناخته‌شده (Web Server) هم تست می‌شود
+    testFetch("10.10.4.13", 80, "WEB-fetch (reference)");
+  });
+</script>
+
+</body>
+</html>

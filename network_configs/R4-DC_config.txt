@@ -1,0 +1,44 @@
+enable
+configure terminal
+hostname R4-DC
+no ip domain-lookup
+enable secret cisco123
+banner motd # R4-DC - Data Center Router #
+!
+interface GigabitEthernet0/0
+ description Link-to-R3-LIB (Ring)
+ ip address 10.10.100.10 255.255.255.252
+ no shutdown
+!
+interface GigabitEthernet0/1
+ description Link-to-R1-EDU (Ring)
+ ip address 10.10.100.13 255.255.255.252
+ no shutdown
+!
+interface GigabitEthernet0/2
+ description LAN-Data-Center (Servers)
+ ip address 10.10.4.1 255.255.255.0
+ no shutdown
+!
+router ospf 1
+ router-id 4.4.4.4
+ network 10.10.100.8 0.0.0.3 area 0
+ network 10.10.100.12 0.0.0.3 area 0
+ network 10.10.4.0 0.0.0.255 area 0
+ passive-interface GigabitEthernet0/2
+!
+line con 0
+ password cisco
+ login
+ logging synchronous
+!
+line vty 0 4
+ password cisco
+ login
+ transport input telnet ssh
+!
+end
+write memory
+
+! نکته: مرکز داده به همان LAN سرورهاست، پس نیازی به ip helper-address ندارد.
+! سرورها مستقیماً روی همین ساب‌نت (10.10.4.0/24) با IP استاتیک قرار می‌گیرند.
